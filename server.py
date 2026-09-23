@@ -39,7 +39,9 @@ SESSION_TTL_SECONDS = int(os.environ.get("SESSION_TTL_SECONDS", str(60 * 60)))
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, description="What the customer said.")
     session_id: str = Field(..., min_length=1, description="Conversation id; reuse it to keep history.")
-    context: dict[str, Any] = Field(default_factory=dict, description="Optional caller-supplied facts.")
+    # Any JSON value, per the interface contract — an object is the useful shape,
+    # but a string, array or null are accepted rather than rejected with a 422.
+    context: Any = Field(default=None, description="Optional caller-supplied facts, any JSON value.")
 
 
 class ChatResponse(BaseModel):
@@ -97,18 +99,40 @@ app = FastAPI(
 )
 
 
-def apply_context(message: str, context: dict[str, Any]) -> str:
+def apply_context(message: str, context: Any) -> str:
     """Prepend caller-supplied context so the model can use it as fact.
 
     Anything the caller already knows — the signed-in customer's email, their
     locale — belongs here rather than in the message, so the agent does not have
-    to ask for it. Keys are passed through verbatim; the agent treats them as
-    account facts, so only send what the caller has actually authenticated.
+    to ask for it. The agent treats these as account facts, so only send what the
+    caller has actually authenticated.
+
+    Accepts any JSON value. An object is the useful shape; a string is passed
+    through as a plain note, and a string that itself contains JSON (a
+    double-encoded body, which is easy to send by accident) is unwrapped first.
+    `None`, `{}`, `[]` and `""` all mean "no context".
     """
-    if not context:
+    if context is None or (isinstance(context, (dict, list, str)) and not context):
         return message
-    rendered = json.dumps(context, ensure_ascii=False, sort_keys=True, default=str)
+
+    if isinstance(context, str):
+        try:
+            decoded = json.loads(context)
+        except (ValueError, TypeError):
+            rendered = context.strip()          # a plain note
+        else:
+            if decoded is None or (isinstance(decoded, (dict, list, str)) and not decoded):
+                return message
+            rendered = _as_json(decoded)
+    else:
+        rendered = _as_json(context)
+
     return f"[session context: {rendered}]\n\n{message}"
+
+
+def _as_json(value: Any) -> str:
+    """Stable rendering — sorted keys so identical context yields identical prompts."""
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
 
 
 @app.post("/chat", response_model=ChatResponse)

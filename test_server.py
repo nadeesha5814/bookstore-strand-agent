@@ -171,3 +171,45 @@ def test_same_session_requests_are_serialised(monkeypatch):
 
     asyncio.run(drive())
     assert overlap["peak"] == 1, f"{overlap['peak']} concurrent invocations of one Agent"
+
+
+# --------------------------------------------------------------------------
+# `context` accepts any JSON value, per the interface contract.
+# --------------------------------------------------------------------------
+
+@pytest.mark.parametrize("context", [
+    {"customer_email": "rafa@example.com"},   # the useful shape
+    "JSON",                                   # a bare string
+    "signed in as Rafa",                      # a plain note
+    ["a", "b"],                               # an array
+    None,                                     # null
+    {},                                       # empty object
+    "",                                       # empty string
+    42,                                       # a number
+    True,                                     # a boolean
+])
+def test_any_json_context_is_accepted(client, context):
+    r = client.post("/chat", json={"message": "hi", "session_id": "s", "context": context})
+    assert r.status_code == 200, r.text
+
+
+@pytest.mark.parametrize("empty", [None, {}, "", []])
+def test_empty_context_leaves_the_message_untouched(empty):
+    assert server.apply_context("hi", empty) == "hi"
+
+
+def test_double_encoded_context_is_unwrapped():
+    """A client that JSON-encodes context twice still gets an object, not a blob."""
+    once = server.apply_context("hi", {"customer_email": "rafa@example.com"})
+    twice = server.apply_context("hi", '{"customer_email": "rafa@example.com"}')
+    assert once == twice
+
+
+def test_unparseable_string_context_is_kept_as_a_note():
+    assert "signed in as Rafa" in server.apply_context("hi", "signed in as Rafa")
+
+
+def test_the_exact_body_from_the_report_is_accepted(client):
+    r = client.post("/chat", json={"message": "How is th", "session_id": "xx1111", "context": "JSON"})
+    assert r.status_code == 200
+    assert list(r.json()) == ["response"]

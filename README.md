@@ -49,7 +49,7 @@ python server.py            # PORT and HOST are honoured
 |---|---|---|
 | `message` | string | Required, non-empty |
 | `session_id` | string | Required. Reuse it to continue a conversation |
-| `context` | object | Optional. Caller-supplied facts merged into the turn |
+| `context` | any JSON | Optional. Caller-supplied facts merged into the turn |
 
 `GET /health` returns `{"status": "ok", "sessions": n}` for platform probes, and
 the generated OpenAPI docs are at `/docs`.
@@ -71,7 +71,11 @@ curl -X POST localhost:8000/chat -H 'Content-Type: application/json' -d '{
 }'
 ```
 
-The agent treats those keys as established account facts, so only send values the
+An object is the useful shape, but any JSON value is accepted rather than
+rejected: a string is passed through as a plain note, a double-encoded JSON
+string is unwrapped first, and `null` / `{}` / `""` / `[]` all mean "no context".
+
+The agent treats this as established account fact, so only send values the
 caller has actually authenticated — anything in `context` is trusted.
 
 **Status codes.** `422` invalid body · `502` the agent or model failed · `503`
@@ -127,7 +131,7 @@ chat.py                streaming CLI, --provider / --model
 demo.py                every tool, no model, no credentials
 list_openai_models.py  what your OpenAI key can reach
 test_bookstore.py      34 tests — domain + tools
-test_server.py         17 tests — HTTP layer, agent stubbed
+test_server.py         33 tests — HTTP layer, agent stubbed
 ```
 
 ## How it works
@@ -201,7 +205,7 @@ Customers: `ada@example.com`, `rafa@example.com`, `yuki@example.com`,
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest -q          # 51 tests, no model calls, no network
+python -m pytest -q          # 67 tests, no model calls, no network
 ```
 
 Covers the domain logic and also checks the seed data is internally consistent —
