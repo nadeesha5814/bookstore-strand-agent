@@ -33,8 +33,19 @@ python chat.py --provider bedrock
 `server.py` exposes the agent over HTTP on port 8000:
 
 ```bash
-python server.py            # PORT and HOST are honoured
+python server.py            # binds 0.0.0.0:8000
 ```
+
+It always listens on **port 8000** and logs the bound address at startup.
+
+A plain `PORT` in the environment is deliberately **ignored** (and the fact is
+logged). Hosting platforms — WSO2 Agent Manager Cloud injects `PORT=8080` —
+would otherwise move the listener off 8000 and leave callers with a connection
+refused. To move the port on purpose, set `BOOKSTORE_PORT`, which nothing else
+writes.
+
+If the platform routes external traffic to the port it injected, point its
+routing at 8000, or set `BOOKSTORE_PORT` to match what it expects.
 
 `POST /chat`
 
@@ -131,7 +142,7 @@ chat.py                streaming CLI, --provider / --model
 demo.py                every tool, no model, no credentials
 list_openai_models.py  what your OpenAI key can reach
 test_bookstore.py      34 tests — domain + tools
-test_server.py         33 tests — HTTP layer, agent stubbed
+test_server.py         38 tests — HTTP layer, agent stubbed
 ```
 
 ## How it works
@@ -205,7 +216,7 @@ Customers: `ada@example.com`, `rafa@example.com`, `yuki@example.com`,
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest -q          # 67 tests, no model calls, no network
+python -m pytest -q          # 72 tests, no model calls, no network
 ```
 
 Covers the domain logic and also checks the seed data is internally consistent —

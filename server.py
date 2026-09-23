@@ -31,6 +31,16 @@ from bookstore.agent import build_agent
 
 logger = logging.getLogger("northwind.server")
 
+# The interface contract is port 8000, so that is what we bind — full stop.
+#
+# A plain `PORT` is deliberately NOT honoured: hosting platforms (WSO2 Agent
+# Manager among them) inject their own `PORT`, which would silently move the
+# listener off 8000 and leave callers with a connection refused. To move the
+# port on purpose, set BOOKSTORE_PORT, which nothing else writes.
+DEFAULT_PORT = 8000
+DEFAULT_HOST = "0.0.0.0"
+PORT_OVERRIDE_VAR = "BOOKSTORE_PORT"
+
 # Sessions are held in memory, so cap them. Oldest idle session is evicted first.
 MAX_SESSIONS = int(os.environ.get("MAX_SESSIONS", "500"))
 SESSION_TTL_SECONDS = int(os.environ.get("SESSION_TTL_SECONDS", str(60 * 60)))
@@ -162,12 +172,35 @@ async def health() -> dict[str, Any]:
     return {"status": "ok", "sessions": len(store)}
 
 
+def resolve_bind() -> tuple[str, int]:
+    """Always port 8000, unless BOOKSTORE_PORT deliberately says otherwise."""
+    host = os.environ.get("HOST", DEFAULT_HOST)
+
+    injected = os.environ.get("PORT")
+    if injected is not None and injected != str(DEFAULT_PORT):
+        logger.warning(
+            "Ignoring PORT=%s from the environment; binding %d as the interface "
+            "contract requires. Set %s to move it on purpose.",
+            injected, DEFAULT_PORT, PORT_OVERRIDE_VAR,
+        )
+
+    raw = os.environ.get(PORT_OVERRIDE_VAR)
+    if raw is None:
+        return host, DEFAULT_PORT
+    try:
+        port = int(raw)
+    except ValueError:
+        logger.warning("%s=%r is not a number; binding %d", PORT_OVERRIDE_VAR, raw, DEFAULT_PORT)
+        return host, DEFAULT_PORT
+    if port != DEFAULT_PORT:
+        logger.warning("%s=%d moves the listener off the expected port %d", PORT_OVERRIDE_VAR, port, DEFAULT_PORT)
+    return host, port
+
+
 if __name__ == "__main__":
     import uvicorn
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    uvicorn.run(
-        app,
-        host=os.environ.get("HOST", "0.0.0.0"),
-        port=int(os.environ.get("PORT", "8000")),
-    )
+    host, port = resolve_bind()
+    logger.info("Northwind Books agent listening on http://%s:%d  (POST /chat)", host, port)
+    uvicorn.run(app, host=host, port=port)

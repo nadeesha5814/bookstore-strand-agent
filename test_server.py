@@ -213,3 +213,38 @@ def test_the_exact_body_from_the_report_is_accepted(client):
     r = client.post("/chat", json={"message": "How is th", "session_id": "xx1111", "context": "JSON"})
     assert r.status_code == 200
     assert list(r.json()) == ["response"]
+
+
+# --------------------------------------------------------------------------
+# The interface contract is port 8000.
+# --------------------------------------------------------------------------
+
+def test_default_port_is_8000(monkeypatch):
+    monkeypatch.delenv("PORT", raising=False)
+    monkeypatch.delenv("BOOKSTORE_PORT", raising=False)
+    monkeypatch.delenv("HOST", raising=False)
+    assert server.resolve_bind() == ("0.0.0.0", 8000)
+
+
+def test_platform_injected_port_is_ignored(monkeypatch):
+    """WSO2 injects PORT=8080; the contract says 8000, so 8000 wins."""
+    monkeypatch.delenv("BOOKSTORE_PORT", raising=False)
+    monkeypatch.setenv("PORT", "8080")
+    assert server.resolve_bind()[1] == 8000
+
+
+def test_deliberate_override_is_honoured(monkeypatch):
+    monkeypatch.setenv("BOOKSTORE_PORT", "9999")
+    assert server.resolve_bind()[1] == 9999
+
+
+def test_deliberate_override_beats_injected_port(monkeypatch):
+    monkeypatch.setenv("PORT", "8080")
+    monkeypatch.setenv("BOOKSTORE_PORT", "9999")
+    assert server.resolve_bind()[1] == 9999
+
+
+def test_non_numeric_override_falls_back_to_8000(monkeypatch):
+    monkeypatch.delenv("PORT", raising=False)
+    monkeypatch.setenv("BOOKSTORE_PORT", "not-a-port")
+    assert server.resolve_bind()[1] == 8000
