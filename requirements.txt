@@ -1,3 +1,15 @@
 # The OpenAI extra is included because OpenAI is the default provider.
 # Bedrock support ships with the base package.
 strands-agents[openai]>=1.57.0
+
+# HTTP chat interface (server.py).
+fastapi>=0.141.0
+uvicorn>=0.53.0
+
+# Pin mcp to 1.x. strands-agents allows >=1.23.0,<2.2, so pip otherwise resolves
+# to 2.x, where `streamablehttp_client` was renamed to `streamable_http_client`.
+# OpenTelemetry MCP instrumentors written against mcp 1.x (including the one in
+# WSO2 Agent Manager Cloud) then fail at startup with a misleading
+# "circular import" error. Nothing here uses MCP; this pin only keeps the
+# host's auto-instrumentation quiet.
+mcp<2

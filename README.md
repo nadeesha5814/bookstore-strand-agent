@@ -28,6 +28,56 @@ python list_openai_models.py        # which models can this key reach?
 python chat.py --provider bedrock
 ```
 
+## HTTP interface
+
+`server.py` exposes the agent over HTTP on port 8000:
+
+```bash
+python server.py            # PORT and HOST are honoured
+```
+
+`POST /chat`
+
+```jsonc
+// request
+{"message": "How much is Project Hail Mary?", "session_id": "abc", "context": {}}
+// response
+{"response": "Project Hail Mary by Andy Weir is $18.99. It's in stock ..."}
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `message` | string | Required, non-empty |
+| `session_id` | string | Required. Reuse it to continue a conversation |
+| `context` | object | Optional. Caller-supplied facts merged into the turn |
+
+`GET /health` returns `{"status": "ok", "sessions": n}` for platform probes, and
+the generated OpenAPI docs are at `/docs`.
+
+**Sessions.** One `session_id` is one `Agent`, and the `Agent` holds the history —
+that is what makes "is there anything else by the same author?" resolve. Sessions
+live in memory, capped at `MAX_SESSIONS` (500) with a `SESSION_TTL_SECONDS`
+(3600) idle timeout, evicted least-recently-used first. They are per-process, so
+behind more than one replica you need sticky sessions or a shared store.
+
+**Context.** Whatever the caller already knows goes here rather than in the
+message, so the agent does not have to ask:
+
+```bash
+curl -X POST localhost:8000/chat -H 'Content-Type: application/json' -d '{
+  "message": "Where are my orders?",
+  "session_id": "abc",
+  "context": {"customer_email": "rafa@example.com"}
+}'
+```
+
+The agent treats those keys as established account facts, so only send values the
+caller has actually authenticated — anything in `context` is trusted.
+
+**Status codes.** `422` invalid body · `502` the agent or model failed · `503`
+the provider is misconfigured (e.g. no `OPENAI_API_KEY`), which is the one to
+watch for on a fresh deploy.
+
 Switch the default with `BOOKSTORE_PROVIDER=bedrock`, or pick per-run with
 `--provider` / `--model`. Everything else — the six tools, the system prompt,
 the conversation handling — is identical either way.
@@ -72,10 +122,12 @@ data/orders.json       8 orders across 4 customers, every status
 bookstore/store.py     domain logic — search, similarity, order views
 bookstore/tools.py     the six @tool functions the model can call
 bookstore/agent.py     provider selection + system prompt
+server.py              POST /chat on port 8000
 chat.py                streaming CLI, --provider / --model
 demo.py                every tool, no model, no credentials
 list_openai_models.py  what your OpenAI key can reach
-test_bookstore.py      34 tests, no network
+test_bookstore.py      34 tests — domain + tools
+test_server.py         17 tests — HTTP layer, agent stubbed
 ```
 
 ## How it works
@@ -148,7 +200,8 @@ Customers: `ada@example.com`, `rafa@example.com`, `yuki@example.com`,
 ## Tests
 
 ```bash
-python -m pytest test_bookstore.py -q
+pip install -r requirements-dev.txt
+python -m pytest -q          # 51 tests, no model calls, no network
 ```
 
 Covers the domain logic and also checks the seed data is internally consistent —
