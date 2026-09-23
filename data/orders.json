@@ -1,0 +1,143 @@
+{
+  "customers": [
+    { "email": "ada@example.com",   "name": "Ada Okafor" },
+    { "email": "rafa@example.com",  "name": "Rafa Mendes" },
+    { "email": "yuki@example.com",  "name": "Yuki Tanaka" },
+    { "email": "priya@example.com", "name": "Priya Raman" }
+  ],
+  "orders": [
+    {
+      "order_id": "ORD-24801",
+      "customer_email": "ada@example.com",
+      "placed_at": "2026-09-19",
+      "status": "shipped",
+      "status_detail": "Handed to carrier, in transit to the destination facility.",
+      "carrier": "UPS",
+      "tracking_number": "1Z999AA10123456784",
+      "estimated_delivery": "2026-09-25",
+      "delivered_at": null,
+      "shipping_city": "Austin, TX",
+      "items": [
+        { "book_id": "BK-1014", "title": "Project Hail Mary", "quantity": 1, "unit_price": 18.99 },
+        { "book_id": "BK-1013", "title": "The Martian",       "quantity": 1, "unit_price": 11.49 }
+      ],
+      "total": 30.48
+    },
+    {
+      "order_id": "ORD-24802",
+      "customer_email": "ada@example.com",
+      "placed_at": "2026-08-30",
+      "status": "delivered",
+      "status_detail": "Left at the front porch.",
+      "carrier": "USPS",
+      "tracking_number": "9400111899223197428490",
+      "estimated_delivery": "2026-09-04",
+      "delivered_at": "2026-09-03",
+      "shipping_city": "Austin, TX",
+      "items": [
+        { "book_id": "BK-1017", "title": "Atomic Habits", "quantity": 2, "unit_price": 16.99 }
+      ],
+      "total": 33.98
+    },
+    {
+      "order_id": "ORD-24803",
+      "customer_email": "rafa@example.com",
+      "placed_at": "2026-09-22",
+      "status": "processing",
+      "status_detail": "Payment cleared; the warehouse is picking your items.",
+      "carrier": null,
+      "tracking_number": null,
+      "estimated_delivery": "2026-09-28",
+      "delivered_at": null,
+      "shipping_city": "Lisbon, PT",
+      "items": [
+        { "book_id": "BK-1006", "title": "The Way of Kings", "quantity": 1, "unit_price": 27.50 }
+      ],
+      "total": 27.50
+    },
+    {
+      "order_id": "ORD-24804",
+      "customer_email": "rafa@example.com",
+      "placed_at": "2026-09-10",
+      "status": "backordered",
+      "status_detail": "Dune Messiah is out of stock; the order ships complete once it arrives.",
+      "carrier": null,
+      "tracking_number": null,
+      "estimated_delivery": "2026-10-19",
+      "delivered_at": null,
+      "shipping_city": "Lisbon, PT",
+      "items": [
+        { "book_id": "BK-1002", "title": "Dune Messiah", "quantity": 1, "unit_price": 10.49 },
+        { "book_id": "BK-1001", "title": "Dune",         "quantity": 1, "unit_price": 11.99 }
+      ],
+      "total": 22.48
+    },
+    {
+      "order_id": "ORD-24805",
+      "customer_email": "yuki@example.com",
+      "placed_at": "2026-09-21",
+      "status": "shipped",
+      "status_detail": "Out for delivery on the estimated date.",
+      "carrier": "FedEx",
+      "tracking_number": "794658123456",
+      "estimated_delivery": "2026-09-24",
+      "delivered_at": null,
+      "shipping_city": "Seattle, WA",
+      "items": [
+        { "book_id": "BK-1022", "title": "The Silent Patient",  "quantity": 1, "unit_price": 11.49 },
+        { "book_id": "BK-1020", "title": "The Girl with the Dragon Tattoo", "quantity": 1, "unit_price": 11.99 },
+        { "book_id": "BK-1025", "title": "Murder on the Orient Express",    "quantity": 1, "unit_price": 9.99 }
+      ],
+      "total": 33.47
+    },
+    {
+      "order_id": "ORD-24806",
+      "customer_email": "yuki@example.com",
+      "placed_at": "2026-07-14",
+      "status": "cancelled",
+      "status_detail": "Cancelled at the customer's request; refunded to the original card.",
+      "carrier": null,
+      "tracking_number": null,
+      "estimated_delivery": null,
+      "delivered_at": null,
+      "shipping_city": "Seattle, WA",
+      "items": [
+        { "book_id": "BK-1015", "title": "Ready Player One", "quantity": 1, "unit_price": 10.99 }
+      ],
+      "total": 10.99
+    },
+    {
+      "order_id": "ORD-24807",
+      "customer_email": "priya@example.com",
+      "placed_at": "2026-09-23",
+      "status": "pending_payment",
+      "status_detail": "Waiting on card authorisation; the order releases as soon as it clears.",
+      "carrier": null,
+      "tracking_number": null,
+      "estimated_delivery": "2026-09-30",
+      "delivered_at": null,
+      "shipping_city": "Bengaluru, IN",
+      "items": [
+        { "book_id": "BK-1019", "title": "Sapiens",               "quantity": 1, "unit_price": 15.49 },
+        { "book_id": "BK-1018", "title": "Thinking, Fast and Slow","quantity": 1, "unit_price": 14.99 }
+      ],
+      "total": 30.48
+    },
+    {
+      "order_id": "ORD-24808",
+      "customer_email": "priya@example.com",
+      "placed_at": "2026-06-02",
+      "status": "returned",
+      "status_detail": "Returned as a damaged spine; refund issued on 2026-06-18.",
+      "carrier": "DHL",
+      "tracking_number": "JD014600003922334455",
+      "estimated_delivery": "2026-06-09",
+      "delivered_at": "2026-06-08",
+      "shipping_city": "Bengaluru, IN",
+      "items": [
+        { "book_id": "BK-1004", "title": "The Lord of the Rings", "quantity": 1, "unit_price": 34.95 }
+      ],
+      "total": 34.95
+    }
+  ]
+}
